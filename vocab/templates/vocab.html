@@ -37,10 +37,15 @@
 <!-- Our own css file.  Note how we can link directly here and not -->
 <!-- write any routing code in the Flask application. -->
 <link rel="stylesheet" href="/static/jumble.css" />
+<script type="text/javascript"
+     src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js">
+</script>
 
 </head>
 
 <body>
+
+
 <div class="container">
 
   <div class="row">
@@ -48,9 +53,9 @@
       <h1>Words</h1>
     </div>
   </div>
-<!-- Vocabularly words layed out in 6 columns;
-  -- bootstrap may collapse to fewer columns and
-  -- more rows if the window is narrow.
+<!-- Vocabularly words layed out in 6 columns
+   bootstrap may collapse to fewer columns and
+   more rows if the window is narrow.
   -->
 <div class="row">
   {% for word in g.vocab %}
@@ -80,34 +85,66 @@
 <br />
 <div class="row">
   <div class="col-xs-6 text-center">
-  <form id="entry" method="POST" action="/_check">
+  <form id="entry">
     <label for="attempt">Word:</label>
     <input id="attempt" name="attempt" type="text" width="15"
       autocomplete="off"  autofocus />
-    <input type="submit" name="try" />
   </form>
 </div></div>
 
 <br />
 
-{% if session.matches|length is not equalto 0  %}
-<h2>You found </h2>
-<p id="results">
-  {% for match in session.matches %}
-  {{ match }} 
-  {% endfor %}
-</p>
-{% endif %}
 
 
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <!-- Mismatch, already found, etc. "flashed" from Python -->
-    {% for message in messages %}
-      <p class="message">{{ message }}</p>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
+
+<p>
+<h2 id="results" style="visibility: hidden;" >You found </h2> <!--hiden element until a match is found !-->
+
+<p id="message" style="font-weight: bold;"> </p> <!-- element for match text !--> 
+
+
+<script>
+
+$("#entry").submit(function(event){
+      event.preventDefault() ;
+    }); //prevent default form behavior just to be safe
+
+
+
+$("#attempt").keyup(function(event){
+  var formText = $("#attempt").val();
+  var keyPressed = event.which;
+  //only get key values from a-z ascii codes
+  //only need to worry about capital letters so this is fine
+  if(keyPressed >= 65 && keyPressed <=90){
+    keyPressed = String.fromCharCode(formText);
+  }
+
+$.getJSON("/_wordcheck", { text : formText },
+    function(data){
+        aMatch = data.result.aMatch; //bool for match
+        aWinner = data.result.aWinner; //bool for win condition 
+
+        if(aMatch){
+          $("#results").css('visibility', 'visible' );//change the style of match element to visible
+          $("#message").append(data.result.matches + " " + "\n"); //append the results and add a new line
+          $("#attempt").val(""); // clear the form value 
+
+        } if(aWinner){
+          window.location.replace("/success"); //redirect to success on win 
+
+        } else {
+          $("#response").append(formText.length + " ");
+
+        }
+    }
+
+  )
+
+})
+
+
+</script>
 
 
 
