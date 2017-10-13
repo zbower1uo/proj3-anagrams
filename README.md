@@ -9,9 +9,9 @@ A simple web page using both Flask and AJAX to play an anagram game
   
   make install
   
-  create a configuration.ini file with specifications
+  create a credentials.ini file with specifications
   
-  place the configuration file you in /vocab directory
+  place the credentials file you in /vocab directory
   
   to start the server:
      ./start.sh
