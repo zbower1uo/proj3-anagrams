@@ -39,14 +39,14 @@ def test_small_vocab():
 
 def test_from_simulated_file():
     from io import StringIO
-    l = StringIO(initial_value="""
+    l = StringIO(initial_value=u"""
         #comment
         # another comment line
         sheep
 
         rats
         #comment
-        squirrels
+        squirrels 
         """)
     vocab = Vocab(l)
     assert sorted(vocab.as_list()) == ["rats", "sheep", "squirrels"]
