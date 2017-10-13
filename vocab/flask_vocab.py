@@ -66,84 +66,33 @@ def keep_going():
 def success():
     return flask.render_template('success.html')
 
-#######################
-# Form handler.
-# CIS 322 note:
-#   You'll need to change this to a
-#   a JSON request handler
-#######################
-
-
-@app.route("/_check", methods=["POST"])
-def check():
-    """
-    User has submitted the form with a word ('attempt')
-    that should be formed from the jumble and on the
-    vocabulary list.  We respond depending on whether
-    the word is on the vocab list (therefore correctly spelled),
-    made only from the jumble letters, and not a word they
-    already found.
-    """
-    app.logger.debug("Entering check")
-
-    # The data we need, from form and from cookie
-    text = flask.request.form["attempt"]
-    jumble = flask.session["jumble"]
-    matches = flask.session.get("matches", [])  # Default to empty list
-
-    # Is it good?
-    in_jumble = LetterBag(jumble).contains(text)
-    matched = WORDS.has(text)
-
-    # Respond appropriately
-    if matched and in_jumble and not (text in matches):
-        # Cool, they found a new word
-        matches.append(text)
-        flask.session["matches"] = matches
-    elif text in matches:
-        flask.flash("You already found {}".format(text))
-    elif not matched:
-        flask.flash("{} isn't in the list of words".format(text))
-    elif not in_jumble:
-        flask.flash(
-            '"{}" can\'t be made from the letters {}'.format(text, jumble))
-    else:
-        app.logger.debug("This case shouldn't happen!")
-        assert False  # Raises AssertionError
-
-    # Choose page:  Solved enough, or keep going?
-    if len(matches) >= flask.session["target_count"]:
-       return flask.redirect(flask.url_for("success"))
-    else:
-       return flask.redirect(flask.url_for("keep_going"))
-
 ###############
 # AJAX request handlers
 #   These return JSON, rather than rendering pages.
 ###############
 
 
-@app.route("/_example")
-def example():
-    """
-    Example ajax request handler
-    """
-    app.logger.debug("Got a JSON request")
-    rslt = {"key": "value"}
-    return flask.jsonify(result=rslt)
+@app.route("/_wordcheck")
+def checkem():
+    text = flask.request.args.get("text", type=str)
+    jumble = flask.session["jumble"]
+    #get the jumble of words and create a list to hold the user matches
+    matches = flask.session.get("matches",[])
+    #check for letters contained in the jumble
+    in_jumble = LetterBag(jumble).contains(text)
+    userMatch = WORDS.has(text)
+    rslt = {"aMatch" : False, "aWinner" :False } #set values to false initialy 
 
+    if userMatch and in_jumble and (text not in matches): #add check for not already in match
+        matches.append(text)
+        flask.session["matches"] = matches #updating matches found to session()
+        rslt["aMatch"] = True
+        rslt["matches"] = text
 
-#################
-# Functions used within the templates
-#################
-
-@app.template_filter('filt')
-def format_filt(something):
-    """
-    Example of a filter that can be used within
-    the Jinja2 code
-    """
-    return "Not what you asked for"
+    if len(matches) >= flask.session["target_count"]:
+    	rslt["aWinner"] = True
+    #compare the length of the matches to the target
+    return flask.jsonify(result=rslt) #rslt not defined 
 
 ###################
 #   Error handlers
